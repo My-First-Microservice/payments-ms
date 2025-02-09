@@ -6,10 +6,10 @@ import { Request, Response } from 'express';
 
 @Injectable()
 export class PaymentsService {
-  private readonly stripe = new Stripe(envs.stripeSecretKey);
+  private readonly stripe = new Stripe(envs.stripe.secretKey);
 
   async createPaymentSession(paymentSessionDto: PaymentSessionDto) {
-    const { currency, items } = paymentSessionDto;
+    const { currency, items, orderId } = paymentSessionDto;
     const line_items = items.map(({ name, quantity, price }) => ({
       price_data: {
         currency,
@@ -24,12 +24,12 @@ export class PaymentsService {
     const session = await this.stripe.checkout.sessions.create({
       // Colocar aquí el id de la orden
       payment_intent_data: {
-        metadata: {},
+        metadata: { orderId },
       },
       line_items,
       mode: 'payment',
-      success_url: 'http://localhost:3003/payments/success',
-      cancel_url: 'http://localhost:3003/payments/cancel',
+      success_url: envs.stripe.successUrl,
+      cancel_url: envs.stripe.cancelUrl,
     });
     return session;
   }
@@ -37,21 +37,27 @@ export class PaymentsService {
   stripeWebhook(req: Request, res: Response) {
     const signature = req.headers['stripe-signature'] as string;
     let event: Stripe.Event;
-    const endpointSecret = '';
 
     try {
       event = this.stripe.webhooks.constructEvent(
         req['rawBody'] as Buffer,
         signature,
-        endpointSecret,
+        envs.stripe.endpointSecret,
       );
     } catch (error) {
       return res.status(400).send(`Webhook error: ${error}`);
     }
 
     switch (event.type) {
-      case 'charge.succeeded':
-      //TODO: call the microservice
+      case 'charge.succeeded': {
+        const chargeSucceeded = event.data.object;
+        console.log({ orderId: chargeSucceeded.metadata.orderId });
+
+        //TODO: call the microservice
+        break;
+      }
+      default:
+        console.log(`Event ${event.type} not handled`);
     }
 
     return res.json({
