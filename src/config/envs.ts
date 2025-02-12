@@ -3,7 +3,7 @@ import * as joi from 'joi';
 
 interface EnvVars {
   PORT: number;
-  NATS_SERVERS: string;
+  NATS_SERVERS: string[];
   STRIPE_SECRET_KEY: string;
   STRIPE_SUCCESS_URL: string;
   STRIPE_CANCEL_URL: string;
@@ -41,6 +41,6 @@ export const envs = {
     endpointSecret: envVars.STRIPE_ENDPOINT_SECRET,
   },
   services: {
-    nats: envVars.NATS_SERVERS
-  }
+    nats: envVars.NATS_SERVERS,
+  },
 };
