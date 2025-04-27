@@ -16,3 +16,5 @@ steps:
         'push',
         'northamerica-south1-docker.pkg.dev/nestjs-microservices-458108/docker-registry/payments-ms',
       ]
+options:
+  logging: CLOUD_LOGGING_ONLY
